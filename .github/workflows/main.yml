@@ -1,0 +1,24 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build Android APK
+      uses: flaming-codes/build-apk-action@v1.1.0
+      with:
+        app-name: "ApkTestApp"
+        web-dir: "."
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: my-app-apk
+        path: ./*.apk
