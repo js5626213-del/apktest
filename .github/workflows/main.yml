@@ -8,18 +8,30 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # 这是一个更稳定的打包方案，直接调用现成的安卓环境
-    - name: Build Android APK
-      uses: Gear-Go/build-apk-action@v2
-      with:
-        app-name: "ApkTestApp"
-        web-dir: "."
+      # 1. 设置 Java 环境（安卓打包必需）
+      - name: set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: my-app-apk
-        path: ./*.apk
+      # 2. 使用一个极其稳定的套壳工具
+      - name: Build with Bubblewrap
+        run: |
+          npm install -g @bubblewrap/cli
+          # 自动生成安卓项目并构建（这里用了默认配置）
+          bubblewrap init --manifest="./manifest.json" || true
+          # 注意：如果这步卡住，是因为你根目录还没放 manifest.json
+          # 咱们先用一个更暴力的“万能打包”工具
+          npm install -g simple-web-to-apk
+          web2apk build --name "MyApk" --url "file://$PWD/index.html" --out .
+
+      # 3. 上传生成的 APK
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-app-apk
+          path: ./*.apk
