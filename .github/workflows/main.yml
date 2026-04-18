@@ -11,27 +11,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. 设置 Java 环境（安卓打包必需）
-      - name: set up JDK 17
-        uses: actions/setup-java@v4
+      # 使用这个极其稳定的 Action，它内置了所有安卓环境
+      - name: Build Android APK
+        uses: swantzter/create-android-project-action@v1
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          # App 的名字
+          app-name: "MyApkTest"
+          # 包名，必须是三段式，且不能有中文
+          package-id: "com.pan.apktest"
+          # 网页代码目录，. 代表根目录
+          web-dir: "."
 
-      # 2. 使用一个极其稳定的套壳工具
-      - name: Build with Bubblewrap
-        run: |
-          npm install -g @bubblewrap/cli
-          # 自动生成安卓项目并构建（这里用了默认配置）
-          bubblewrap init --manifest="./manifest.json" || true
-          # 注意：如果这步卡住，是因为你根目录还没放 manifest.json
-          # 咱们先用一个更暴力的“万能打包”工具
-          npm install -g simple-web-to-apk
-          web2apk build --name "MyApk" --url "file://$PWD/index.html" --out .
+      # 这一步是把生成的安卓工程编译成真正的 APK
+      - name: Export APK
+        uses: nwutils/default-build-action@v1
+        with:
+          output-path: "app-debug.apk"
 
-      # 3. 上传生成的 APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: my-app-apk
-          path: ./*.apk
+          path: "app-debug.apk"
